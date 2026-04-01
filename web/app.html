@@ -10,6 +10,12 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css">
 </head>
 <body>
+    <div id="loading-screen" style="position:fixed;inset:0;z-index:9999;background:#1a1b26;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity .5s">
+        <img src="/logo.png" alt="ThinkerChat" style="width:220px;max-width:60%">
+        <div style="color:#565f89;font-size:.9rem;letter-spacing:1px">Connecting...</div>
+        <div style="width:120px;height:3px;background:#292e42;border-radius:2px;overflow:hidden"><div style="width:0%;height:100%;background:#7aa2f7;border-radius:2px;animation:loadbar 2.5s ease forwards"></div></div>
+    </div>
+    <style>@keyframes loadbar{0%{width:0}40%{width:60%}80%{width:90%}100%{width:100%}}</style>
     <header>
         <div class="status-dot offline" id="status-dot" title="Agent Offline"></div>
         <nav>

@@ -106,6 +106,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     ws.connect();
-
     switchTab('terminal');
+
+    setTimeout(() => {
+        const ls = document.getElementById('loading-screen');
+        if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.remove(), 500); }
+    }, 3000);
 });
