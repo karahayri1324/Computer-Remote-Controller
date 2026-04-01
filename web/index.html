@@ -77,26 +77,12 @@
             margin-top: 12px;
             min-height: 20px;
         }
-        .tabs { display: flex; margin-bottom: 24px; border-radius: 8px; overflow: hidden; }
-        .tabs button {
-            flex: 1; padding: 10px; background: #1a1b26; color: #565f89;
-            border: 1px solid #3b4261; font-size: 0.85rem; margin: 0; border-radius: 0;
-        }
-        .tabs button.active { background: #7aa2f7; color: #1a1b26; border-color: #7aa2f7; }
-        .tabs button:first-child { border-radius: 8px 0 0 8px; }
-        .tabs button:last-child { border-radius: 0 8px 8px 0; }
     </style>
 </head>
 <body>
     <div class="login-card">
         <h1>RemoteController</h1>
         <p class="subtitle">Access your PC from anywhere</p>
-
-        <div class="tabs">
-            <button id="tab-login" class="active" onclick="showTab('login')">Login</button>
-            <button id="tab-register" onclick="showTab('register')">Register</button>
-        </div>
-
         <form id="login-form">
             <div class="form-group">
                 <label for="login-user">Username</label>
@@ -108,37 +94,12 @@
             </div>
             <button type="submit" id="login-btn">Login</button>
         </form>
-
-        <form id="register-form" style="display:none">
-            <div class="form-group">
-                <label for="reg-user">Username</label>
-                <input type="text" id="reg-user" autocomplete="username" placeholder="min 3 chars, alphanumeric">
-            </div>
-            <div class="form-group">
-                <label for="reg-pass">Password</label>
-                <input type="password" id="reg-pass" autocomplete="new-password" placeholder="min 4 chars">
-            </div>
-            <button type="submit" id="reg-btn">Register</button>
-        </form>
-
         <p class="error" id="error-msg"></p>
-        <p class="error" id="success-msg" style="color:#9ece6a"></p>
     </div>
 
     <script>
         const errorMsg = document.getElementById('error-msg');
-        const successMsg = document.getElementById('success-msg');
 
-        function showTab(tab) {
-            errorMsg.textContent = '';
-            successMsg.textContent = '';
-            document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
-            document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
-            document.getElementById('tab-login').classList.toggle('active', tab === 'login');
-            document.getElementById('tab-register').classList.toggle('active', tab === 'register');
-        }
-
-        // Login
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             errorMsg.textContent = '';
@@ -164,35 +125,6 @@
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Login';
-            }
-        });
-
-        // Register
-        document.getElementById('register-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            errorMsg.textContent = '';
-            successMsg.textContent = '';
-            const btn = document.getElementById('reg-btn');
-            btn.disabled = true;
-            btn.textContent = 'Registering...';
-            try {
-                const resp = await fetch('/api/register', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        username: document.getElementById('reg-user').value,
-                        password: document.getElementById('reg-pass').value,
-                    })
-                });
-                const data = await resp.json();
-                if (!resp.ok) { errorMsg.textContent = data.error || 'Registration failed'; return; }
-                successMsg.textContent = 'Account created! You can now login.';
-                setTimeout(() => showTab('login'), 1500);
-            } catch (err) {
-                errorMsg.textContent = 'Connection error';
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Register';
             }
         });
 
