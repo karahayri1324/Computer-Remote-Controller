@@ -1,0 +1,19 @@
+# WebSocket URL of your relay server
+relay_url: "wss://YOUR_DOMAIN_OR_VPS_IP:3131/ws/agent"
+
+# Must match the agent_token in relay/config.yaml
+agent_token: "CHANGE_ME_MUST_MATCH_RELAY"
+
+heartbeat_interval: 15
+reconnect_base_delay: 1
+reconnect_max_delay: 60
+
+shell_default_cols: 120
+shell_default_rows: 30
+
+# Empty = no restriction. List of path prefixes to restrict file access.
+# Example: ["/home/user", "/var/log"]
+allowed_paths: []
+
+max_chunk_size: 524288
+sysinfo_cache_seconds: 2

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RemoteController - Login</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #1a1b26;
+            color: #a9b1d6;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .login-card {
+            background: #24283b;
+            border-radius: 12px;
+            padding: 40px;
+            width: 90%;
+            max-width: 380px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+        }
+        h1 {
+            color: #7aa2f7;
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .subtitle {
+            color: #565f89;
+            font-size: 0.85rem;
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+            color: #7982a9;
+        }
+        input[type="password"] {
+            width: 100%;
+            padding: 12px 14px;
+            background: #1a1b26;
+            border: 1px solid #3b4261;
+            border-radius: 8px;
+            color: #c0caf5;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input[type="password"]:focus {
+            border-color: #7aa2f7;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #7aa2f7;
+            color: #1a1b26;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover { background: #89b4fa; }
+        button:disabled { background: #3b4261; cursor: not-allowed; }
+        .error {
+            color: #f7768e;
+            font-size: 0.85rem;
+            text-align: center;
+            margin-top: 12px;
+            min-height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h1>RemoteController</h1>
+        <p class="subtitle">Enter password to access your PC</p>
+        <form id="login-form">
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" autocomplete="current-password" autofocus>
+            </div>
+            <button type="submit" id="login-btn">Login</button>
+        </form>
+        <p class="error" id="error-msg"></p>
+    </div>
+
+    <script>
+        const form = document.getElementById('login-form');
+        const passwordInput = document.getElementById('password');
+        const errorMsg = document.getElementById('error-msg');
+        const loginBtn = document.getElementById('login-btn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMsg.textContent = '';
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Logging in...';
+
+            try {
+                const resp = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: passwordInput.value })
+                });
+
+                const data = await resp.json();
+
+                if (!resp.ok) {
+                    errorMsg.textContent = data.error || 'Login failed';
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Login';
+                    return;
+                }
+
+                sessionStorage.setItem('access_token', data.access_token);
+                window.location.href = '/app.html';
+            } catch (err) {
+                errorMsg.textContent = 'Connection error';
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Login';
+            }
+        });
+
+        // If already logged in, redirect
+        if (sessionStorage.getItem('access_token')) {
+            window.location.href = '/app.html';
+        }
+    </script>
+</body>
+</html>
