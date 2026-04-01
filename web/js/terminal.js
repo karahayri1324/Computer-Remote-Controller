@@ -37,7 +37,6 @@ class TerminalUI {
             },
             scrollback: 5000,
             allowProposedApi: true,
-            // Mobile: allow native scrolling within terminal
             scrollOnUserInput: true,
         });
 
@@ -45,30 +44,24 @@ class TerminalUI {
         this.term.loadAddon(this.fitAddon);
         this.term.open(this.container);
 
-        // Initial fit
         setTimeout(() => this.fit(), 100);
 
-        // User types -> send to agent
         this.term.onData((data) => {
             this.ws.send('shell_input', { data });
         });
 
-        // Agent output -> write to terminal
         this.ws.on('shell_output', (msg) => {
             this.term.write(msg.payload.data);
         });
 
-        // Handle resize
         const ro = new ResizeObserver(() => {
             clearTimeout(this._resizeTimeout);
             this._resizeTimeout = setTimeout(() => this.fit(), 50);
         });
         ro.observe(this.container);
 
-        // Mobile: tap terminal area to focus (triggers virtual keyboard)
         if (this._isMobile) {
             this.container.addEventListener('touchstart', (e) => {
-                // Focus textarea to trigger virtual keyboard
                 const textarea = this.container.querySelector('.xterm-helper-textarea');
                 if (textarea) {
                     textarea.focus();

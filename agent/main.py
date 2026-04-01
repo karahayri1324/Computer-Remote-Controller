@@ -13,8 +13,6 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 )
 logger = logging.getLogger(__name__)
-
-
 async def main():
     config = load_config()
     sysinfo = SystemInfo(cache_ttl=config.sysinfo_cache_seconds)
@@ -110,7 +108,5 @@ async def main():
     conn.handler = handle_message
     logger.info("Agent starting...")
     await conn.run_forever()
-
-
 if __name__ == "__main__":
     asyncio.run(main())

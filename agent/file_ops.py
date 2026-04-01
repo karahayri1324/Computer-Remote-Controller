@@ -7,8 +7,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 CHUNK_SIZE = 524288  # 512KB
-
-
 class FileOperations:
     def __init__(self, send_callback, allowed_paths=None):
         self.send = send_callback
@@ -91,7 +89,6 @@ class FileOperations:
     async def handle_upload_start(self, path: str, total_size: int, total_chunks: int, session_id: str):
         try:
             resolved = self._check_path(path)
-            # Ensure parent directory exists
             os.makedirs(os.path.dirname(resolved), exist_ok=True)
             self._uploads[resolved] = {
                 "expected": total_chunks,

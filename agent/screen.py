@@ -23,7 +23,6 @@ try:
 except ImportError:
     HAS_PIL = False
 
-# Input backends
 HAS_INPUT = False
 
 if IS_WINDOWS:
@@ -32,7 +31,6 @@ if IS_WINDOWS:
         user32 = ctypes.windll.user32
         HAS_INPUT = True
 
-        # Windows input constants
         INPUT_MOUSE = 0
         INPUT_KEYBOARD = 1
         MOUSEEVENTF_MOVE = 0x0001
@@ -79,8 +77,6 @@ else:
         HAS_INPUT = _check_xdotool()
     except Exception:
         HAS_INPUT = False
-
-
 class ScreenCapture:
     def __init__(self, send_callback):
         self.send = send_callback
@@ -188,9 +184,6 @@ class ScreenCapture:
                 await loop.run_in_executor(None, self._handle_input_linux, input_type, data)
         except Exception as e:
             logger.error(f"Input handling error: {e}")
-
-    # ── Linux (xdotool) ──
-
     def _handle_input_linux(self, input_type: str, data: dict):
         def _run(args):
             subprocess.run(args, capture_output=True, timeout=1)
@@ -216,9 +209,6 @@ class ScreenCapture:
             _run(["xdotool", "mousedown", str(data.get("button", 1))])
         elif input_type == "mouse_up":
             _run(["xdotool", "mouseup", str(data.get("button", 1))])
-
-    # ── Windows (ctypes/user32) ──
-
     def _handle_input_windows(self, input_type: str, data: dict):
         if input_type == "mouse_move":
             x, y = int(data["x"]), int(data["y"])
@@ -293,7 +283,6 @@ class ScreenCapture:
     @staticmethod
     def _win_key_to_vk(key_str: str) -> int:
         """Map xdotool-style key names to Windows VK codes."""
-        # Handle modifier combos like "ctrl+c"
         parts = key_str.lower().split("+")
         modifiers = []
         main_key = parts[-1] if parts else ""
@@ -311,7 +300,6 @@ class ScreenCapture:
             "ctrl": 0x11, "alt": 0x12, "shift": 0x10, "super": 0x5B,
         }
 
-        # Press modifier keys then main key
         if modifiers:
             for mod in modifiers:
                 vk = vk_map.get(mod, 0)
@@ -333,7 +321,6 @@ class ScreenCapture:
             inp2.union.ki.dwFlags = KEYEVENTF_KEYUP
             user32.SendInput(1, ctypes.byref(inp2), ctypes.sizeof(INPUT))
 
-        # Release modifiers
         if modifiers:
             for mod in reversed(modifiers):
                 vk = vk_map.get(mod, 0)

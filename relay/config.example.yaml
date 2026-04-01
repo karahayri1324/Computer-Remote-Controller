@@ -4,13 +4,6 @@ port: 3131
 # Generate with: python3 -c "import secrets; print(secrets.token_hex(32))"
 secret_key: "CHANGE_ME_GENERATE_WITH_COMMAND_ABOVE"
 
-# Leave empty - will be set on first web login
-password_hash: ""
-
-# Pre-shared token for agent authentication (must match agent config)
-# Generate with: python3 -c "import secrets; print(secrets.token_hex(32))"
-agent_token: "CHANGE_ME_GENERATE_WITH_COMMAND_ABOVE"
-
 token_expiry_minutes: 1440
 web_root: "../web"
 heartbeat_interval: 15

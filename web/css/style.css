@@ -35,7 +35,6 @@ body {
     padding-bottom: var(--safe-bottom);
 }
 
-/* Header */
 header {
     background: var(--bg-secondary);
     display: flex;
@@ -99,7 +98,6 @@ nav button.active { color: var(--accent); background: var(--bg-tertiary); }
 }
 #logout-btn:hover { color: var(--danger); border-color: var(--danger); }
 
-/* Main content */
 main {
     flex: 1;
     display: flex;
@@ -119,7 +117,6 @@ main {
     flex-direction: column;
 }
 
-/* ========== Terminal Tab ========== */
 #tab-terminal {
     position: relative;
 }
@@ -131,7 +128,6 @@ main {
     min-height: 0;
 }
 
-/* Mobile keyboard helper bar */
 #mobile-keyboard-bar {
     display: none;
     flex-shrink: 0;
@@ -163,7 +159,6 @@ main {
     color: var(--bg-primary);
 }
 
-/* ========== Files Tab ========== */
 #tab-files {
     overflow: auto;
     -webkit-overflow-scrolling: touch;
@@ -269,7 +264,6 @@ main {
     text-decoration: underline;
 }
 
-/* ========== Dashboard Tab ========== */
 #tab-dashboard {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
@@ -335,7 +329,6 @@ main {
     transition: height 0.5s ease;
 }
 
-/* ========== Screen Tab ========== */
 .screen-controls {
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--border);
@@ -400,7 +393,6 @@ main {
     outline: none;
 }
 
-/* ========== Toast Notifications ========== */
 .toast-container {
     position: fixed;
     top: 56px;
@@ -429,14 +421,10 @@ main {
     to { transform: translateX(0); opacity: 1; }
 }
 
-/* ========== Desktop-only elements ========== */
 .desktop-only {
-    /* Shown by default, hidden on mobile via media query */
 }
 
-/* ========== Mobile Responsive ========== */
 @media (max-width: 768px) {
-    /* Hide desktop-only elements */
     .desktop-only { display: none !important; }
 
     header { padding: 0 6px; height: 44px; gap: 6px; }
@@ -444,31 +432,24 @@ main {
     nav button { padding: 6px 10px; font-size: 0.8rem; }
     #logout-btn { padding: 4px 8px; font-size: 0.75rem; }
 
-    /* Show mobile keyboard bar */
     #mobile-keyboard-bar { display: flex; }
 
-    /* Terminal adjustments for mobile */
     #terminal-container { padding: 2px; }
 
-    /* Files adjustments */
     .file-toolbar { padding: 6px 8px; }
     .file-entry { padding: 10px 12px; }
 
-    /* Dashboard single column */
     .dashboard-grid { grid-template-columns: 1fr; gap: 8px; }
     #tab-dashboard { padding: 8px; }
     .dash-card { padding: 12px; }
 
-    /* Upload area compact */
     .upload-area { padding: 8px; }
     .upload-drop { padding: 12px; }
 
-    /* Toast position */
     .toast-container { top: 48px; right: 8px; left: 8px; }
     .toast { max-width: 100%; }
 }
 
-/* Extra small screens */
 @media (max-width: 380px) {
     nav button { padding: 5px 7px; font-size: 0.72rem; }
     #logout-btn { padding: 3px 6px; font-size: 0.7rem; }
@@ -478,7 +459,6 @@ main {
     .info-row { font-size: 0.78rem; }
 }
 
-/* Handle virtual keyboard on mobile */
 @media (max-height: 500px) and (max-width: 768px) {
     header { height: 36px; }
     nav button { padding: 4px 8px; font-size: 0.75rem; }

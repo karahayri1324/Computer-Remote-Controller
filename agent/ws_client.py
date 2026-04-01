@@ -7,8 +7,6 @@ import random
 import websockets
 
 logger = logging.getLogger(__name__)
-
-
 class RelayConnection:
     def __init__(self, config, message_handler):
         self.config = config
@@ -30,10 +28,12 @@ class RelayConnection:
                 ) as ws:
                     self.ws = ws
 
-                    # Authenticate
                     await ws.send(json.dumps({
                         "type": "auth",
-                        "payload": {"token": self.config.agent_token}
+                        "payload": {
+                            "username": self.config.username,
+                            "token": self.config.agent_token,
+                        }
                     }))
                     raw = await asyncio.wait_for(ws.recv(), timeout=10)
                     resp = json.loads(raw)

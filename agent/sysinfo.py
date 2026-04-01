@@ -4,8 +4,6 @@ import subprocess
 import shutil
 
 import psutil
-
-
 class SystemInfo:
     def __init__(self, cache_ttl: int = 2):
         self._cache = None

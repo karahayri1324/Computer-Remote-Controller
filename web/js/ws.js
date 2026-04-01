@@ -32,7 +32,6 @@ class WS {
         this.ws.onclose = (event) => {
             this._dispatch('_disconnected', {});
             if (event.code === 4001) {
-                // Auth failed
                 Auth.logout();
                 return;
             }

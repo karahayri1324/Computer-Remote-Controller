@@ -10,7 +10,6 @@ class RemoteScreen {
         this._naturalWidth = 0;
         this._naturalHeight = 0;
 
-        // Settings
         this.fpsSlider = document.getElementById('screen-fps');
         this.qualitySlider = document.getElementById('screen-quality');
         this.fpsValue = document.getElementById('screen-fps-value');
@@ -102,7 +101,6 @@ class RemoteScreen {
     }
 
     _setupInput() {
-        // Coordinate translation
         const getRemoteCoords = (e) => {
             const rect = this.canvas.getBoundingClientRect();
             const scaleX = this._naturalWidth / this.canvas.width;
@@ -113,7 +111,6 @@ class RemoteScreen {
             };
         };
 
-        // Mouse move
         let lastMove = 0;
         this.canvas.addEventListener('mousemove', (e) => {
             if (!this.streaming) return;
@@ -127,7 +124,6 @@ class RemoteScreen {
             });
         });
 
-        // Mouse click
         this.canvas.addEventListener('click', (e) => {
             if (!this.streaming) return;
             const coords = getRemoteCoords(e);
@@ -137,7 +133,6 @@ class RemoteScreen {
             });
         });
 
-        // Double click
         this.canvas.addEventListener('dblclick', (e) => {
             if (!this.streaming) return;
             e.preventDefault();
@@ -148,7 +143,6 @@ class RemoteScreen {
             });
         });
 
-        // Right click
         this.canvas.addEventListener('contextmenu', (e) => {
             if (!this.streaming) return;
             e.preventDefault();
@@ -159,7 +153,6 @@ class RemoteScreen {
             });
         });
 
-        // Scroll
         this.canvas.addEventListener('wheel', (e) => {
             if (!this.streaming) return;
             e.preventDefault();
@@ -172,7 +165,6 @@ class RemoteScreen {
             });
         }, { passive: false });
 
-        // Keyboard
         const keyMap = {
             'Enter': 'Return', 'Backspace': 'BackSpace', 'Delete': 'Delete',
             'Tab': 'Tab', 'Escape': 'Escape', 'ArrowUp': 'Up', 'ArrowDown': 'Down',
@@ -189,7 +181,6 @@ class RemoteScreen {
             if (!this.streaming) return;
             e.preventDefault();
 
-            // Build xdotool key combo
             let parts = [];
             if (e.ctrlKey) parts.push('ctrl');
             if (e.altKey) parts.push('alt');

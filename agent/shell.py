@@ -14,15 +14,12 @@ if not IS_WINDOWS:
     import struct
     import fcntl
     import termios
-
-
 class ShellManager:
     def __init__(self, send_callback):
         self.send = send_callback
         self.master_fd = None
         self.pid = None
         self._reader_task = None
-        # Windows
         self._process = None
 
     async def start(self, cols=120, rows=30):
@@ -69,7 +66,6 @@ class ShellManager:
         if self._process is not None:
             return
 
-        # Use powershell if available, fallback to cmd
         shell_cmd = "powershell.exe"
         try:
             subprocess.run(["powershell.exe", "-Command", "echo ok"],
@@ -133,7 +129,6 @@ class ShellManager:
                 if not data:
                     break
                 text = data.decode("utf-8", errors="replace")
-                # Normalize line endings for xterm
                 text = text.replace("\r\n", "\r\n").replace("\n", "\r\n")
                 await self.send({
                     "type": "shell_output",
@@ -155,7 +150,6 @@ class ShellManager:
         if IS_WINDOWS:
             if self._process and self._process.stdin:
                 try:
-                    # Convert \r to \r\n for Windows
                     win_data = data.replace("\r", "\r\n") if data == "\r" else data
                     self._process.stdin.write(win_data.encode("utf-8"))
                     await self._process.stdin.drain()

@@ -32,14 +32,12 @@ class FileBrowser {
         this.pathEl.textContent = payload.path;
         this.listEl.innerHTML = '';
 
-        // Parent directory entry
         if (payload.path !== '/') {
             const parentPath = payload.path.split('/').slice(0, -1).join('/') || '/';
             const el = this._createEntry({ name: '..', is_dir: true, size: 0, mtime: 0 }, parentPath);
             this.listEl.appendChild(el);
         }
 
-        // Sort: directories first, then files
         const entries = payload.entries.sort((a, b) => {
             if (a.is_dir && !b.is_dir) return -1;
             if (!a.is_dir && b.is_dir) return 1;
@@ -101,7 +99,6 @@ class FileBrowser {
         dl.chunks[payload.chunk_index] = payload.data;
 
         if (payload.done) {
-            // Combine chunks and trigger browser download
             const combined = dl.chunks.join('');
             const bytes = Uint8Array.from(atob(combined), c => c.charCodeAt(0));
             const blob = new Blob([bytes]);
@@ -165,7 +162,6 @@ class FileBrowser {
         }
 
         this.showToast(`Uploaded ${file.name}`, 'success');
-        // Refresh after a short delay
         setTimeout(() => this.navigate(this.currentPath), 500);
     }
 

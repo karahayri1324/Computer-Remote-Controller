@@ -26,7 +26,6 @@ class Dashboard {
     _update(data) {
         this.container.innerHTML = '';
 
-        // System Info Card
         this._addCard('System', `
             <div class="info-row"><span class="info-label">Hostname</span><span class="info-value">${data.hostname}</span></div>
             <div class="info-row"><span class="info-label">Platform</span><span class="info-value">${data.platform}</span></div>
@@ -34,7 +33,6 @@ class Dashboard {
             ${data.battery ? `<div class="info-row"><span class="info-label">Battery</span><span class="info-value">${data.battery.percent}%${data.battery.plugged ? ' (plugged)' : ''}</span></div>` : ''}
         `);
 
-        // CPU Card
         const cpuAvg = data.cpu_percent.length > 0
             ? (data.cpu_percent.reduce((a, b) => a + b, 0) / data.cpu_percent.length).toFixed(1)
             : 0;
@@ -46,7 +44,6 @@ class Dashboard {
         cpuBars += '</div>';
         this._addCard(`CPU (${data.cpu_count} cores) - ${cpuAvg}%`, cpuBars);
 
-        // Memory Card
         const memUsed = this._formatBytes(data.mem.used);
         const memTotal = this._formatBytes(data.mem.total);
         const memClass = data.mem.percent > 80 ? 'danger' : data.mem.percent > 60 ? 'warning' : 'normal';
@@ -56,7 +53,6 @@ class Dashboard {
             <div class="info-row"><span class="info-label">${data.mem.percent}% used</span><span class="info-value">${this._formatBytes(data.mem.available)} free</span></div>
         `);
 
-        // Disk Cards
         let diskHtml = '';
         for (const d of data.disk) {
             const diskClass = d.percent > 90 ? 'danger' : d.percent > 75 ? 'warning' : 'normal';
@@ -70,7 +66,6 @@ class Dashboard {
         }
         this._addCard('Disk', diskHtml);
 
-        // Network Card
         let netHtml = `
             <div class="info-row"><span class="info-label">Total Sent</span><span class="info-value">${this._formatBytes(data.net.bytes_sent)}</span></div>
             <div class="info-row"><span class="info-label">Total Received</span><span class="info-value">${this._formatBytes(data.net.bytes_recv)}</span></div>
@@ -91,7 +86,6 @@ class Dashboard {
         this._prevNetTime = now;
         this._addCard('Network', netHtml);
 
-        // GPU Card(s)
         if (data.gpu && data.gpu.length > 0) {
             for (const g of data.gpu) {
                 const gpuUtilClass = g.gpu_util > 80 ? 'danger' : g.gpu_util > 50 ? 'warning' : 'normal';

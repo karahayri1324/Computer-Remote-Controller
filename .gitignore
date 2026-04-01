@@ -1,5 +1,6 @@
-# Config files with secrets
+# Config and data with secrets
 relay/config.yaml
+relay/users.json
 agent/config.yaml
 
 # Python

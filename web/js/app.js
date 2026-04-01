@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => toast.remove(), 4000);
     }
 
-    // Agent status
     ws.on('agent_status', (msg) => {
         statusDot.className = 'status-dot ' + (msg.payload.online ? 'online' : 'offline');
         statusDot.title = msg.payload.online ? 'Agent Online' : 'Agent Offline';
@@ -28,24 +27,19 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast(msg.payload.message, 'error');
     });
 
-    // Terminal
     const terminalUI = new TerminalUI(document.getElementById('terminal-container'), ws);
     terminalUI.init();
 
-    // File Browser
     const fileBrowser = new FileBrowser(ws, showToast);
 
-    // Dashboard
     const dashboard = new Dashboard(ws);
 
-    // Screen (desktop only)
     const isDesktop = window.innerWidth > 768;
     let remoteScreen = null;
     if (isDesktop) {
         remoteScreen = new RemoteScreen(ws, showToast);
     }
 
-    // Mobile keyboard bar
     const kbBar = document.getElementById('mobile-keyboard-bar');
     if (kbBar) {
         kbBar.addEventListener('click', (e) => {
@@ -54,7 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const key = btn.dataset.key;
             if (key) {
                 ws.send('shell_input', { data: key });
-                // Brief visual feedback
                 btn.style.background = 'var(--accent)';
                 btn.style.color = 'var(--bg-primary)';
                 setTimeout(() => {
@@ -65,7 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Tab switching
     const tabs = document.querySelectorAll('nav button[data-tab]');
     const tabContents = document.querySelectorAll('.tab-content');
 
@@ -96,31 +88,24 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => switchTab(btn.dataset.tab));
     });
 
-    // Logout
     document.getElementById('logout-btn').addEventListener('click', () => {
         Auth.logout();
     });
 
-    // Go button for file path
     document.getElementById('go-btn').addEventListener('click', () => {
         const path = prompt('Enter path:', fileBrowser.currentPath);
         if (path) fileBrowser.navigate(path);
     });
 
-    // Mobile: handle viewport resize (virtual keyboard)
     const visualViewport = window.visualViewport;
     if (visualViewport) {
         visualViewport.addEventListener('resize', () => {
-            // Update body height when virtual keyboard opens/closes
             document.body.style.height = visualViewport.height + 'px';
-            // Refit terminal
             setTimeout(() => terminalUI.fit(), 50);
         });
     }
 
-    // Connect
     ws.connect();
 
-    // Default tab
     switchTab('terminal');
 });
