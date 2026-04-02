@@ -6,7 +6,6 @@ class RemoteScreen {
         this.ctx = this.canvas.getContext('2d');
         this.streaming = false;
         this.available = false;
-        this._img = new Image();
         this._naturalWidth = 0;
         this._naturalHeight = 0;
 
@@ -74,13 +73,20 @@ class RemoteScreen {
     }
 
     _onFrame(payload) {
-        this._img.onload = () => {
-            this._naturalWidth = payload.width;
-            this._naturalHeight = payload.height;
-            this._fitCanvas();
-            this.ctx.drawImage(this._img, 0, 0, this.canvas.width, this.canvas.height);
+        const w = payload.width;
+        const h = payload.height;
+
+        if (w !== this._naturalWidth || h !== this._naturalHeight) {
+            this._naturalWidth = w;
+            this._naturalHeight = h;
+        }
+        this._fitCanvas();
+
+        const img = new Image();
+        img.onload = () => {
+            this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
         };
-        this._img.src = 'data:image/jpeg;base64,' + payload.data;
+        img.src = 'data:image/jpeg;base64,' + payload.data;
     }
 
     _fitCanvas() {
@@ -96,15 +102,19 @@ class RemoteScreen {
             w = cw;
             h = w / ratio;
         }
-        this.canvas.width = Math.floor(w);
-        this.canvas.height = Math.floor(h);
+        const newW = Math.floor(w);
+        const newH = Math.floor(h);
+        if (this.canvas.width !== newW || this.canvas.height !== newH) {
+            this.canvas.width = newW;
+            this.canvas.height = newH;
+        }
     }
 
     _setupInput() {
         const getRemoteCoords = (e) => {
             const rect = this.canvas.getBoundingClientRect();
-            const scaleX = this._naturalWidth / this.canvas.width;
-            const scaleY = this._naturalHeight / this.canvas.height;
+            const scaleX = this._naturalWidth / rect.width;
+            const scaleY = this._naturalHeight / rect.height;
             return {
                 x: Math.round((e.clientX - rect.left) * scaleX),
                 y: Math.round((e.clientY - rect.top) * scaleY),
@@ -115,7 +125,7 @@ class RemoteScreen {
         this.canvas.addEventListener('mousemove', (e) => {
             if (!this.streaming) return;
             const now = Date.now();
-            if (now - lastMove < 30) return; // Throttle to ~33fps
+            if (now - lastMove < 16) return;
             lastMove = now;
             const coords = getRemoteCoords(e);
             this.ws.send('screen_input', {
@@ -124,12 +134,17 @@ class RemoteScreen {
             });
         });
 
-        this.canvas.addEventListener('click', (e) => {
+        this.canvas.addEventListener('mousedown', (e) => {
             if (!this.streaming) return;
+            e.preventDefault();
+            this.canvas.focus();
             const coords = getRemoteCoords(e);
+            let button = 1;
+            if (e.button === 2) button = 3;
+            else if (e.button === 1) button = 2;
             this.ws.send('screen_input', {
                 input_type: 'mouse_click',
-                data: { ...coords, button: e.button === 2 ? 3 : 1 },
+                data: { ...coords, button },
             });
         });
 
@@ -144,21 +159,17 @@ class RemoteScreen {
         });
 
         this.canvas.addEventListener('contextmenu', (e) => {
-            if (!this.streaming) return;
             e.preventDefault();
-            const coords = getRemoteCoords(e);
-            this.ws.send('screen_input', {
-                input_type: 'mouse_click',
-                data: { ...coords, button: 3 },
-            });
         });
 
         this.canvas.addEventListener('wheel', (e) => {
             if (!this.streaming) return;
             e.preventDefault();
+            const coords = getRemoteCoords(e);
             this.ws.send('screen_input', {
                 input_type: 'mouse_scroll',
                 data: {
+                    ...coords,
                     direction: e.deltaY < 0 ? 'up' : 'down',
                     clicks: '3',
                 },

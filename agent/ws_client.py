@@ -21,7 +21,7 @@ class RelayConnection:
                 logger.info(f"Connecting to {self.config.relay_url}")
                 async with websockets.connect(
                     self.config.relay_url,
-                    max_size=2 ** 21,
+                    max_size=2 ** 24,
                     ping_interval=20,
                     ping_timeout=10,
                     close_timeout=5,

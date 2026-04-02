@@ -86,6 +86,10 @@ class ScreenCapture:
         self._quality = 50
         self._max_width = 1280
         self._session_id = None
+        self._screen_width = 0
+        self._screen_height = 0
+        self._img_width = 0
+        self._img_height = 0
 
     @property
     def available(self) -> bool:
@@ -100,7 +104,7 @@ class ScreenCapture:
             })
             return
 
-        self._target_fps = min(fps, 30)
+        self._target_fps = min(fps, 60)
         self._quality = max(10, min(quality, 95))
         self._max_width = max_width
         self._session_id = session_id
@@ -123,8 +127,26 @@ class ScreenCapture:
             self._stream_task = None
         logger.info("Screen stream stopped")
 
+    def _encode_image(self, img):
+        if img.width > self._max_width:
+            ratio = self._max_width / img.width
+            new_size = (self._max_width, int(img.height * ratio))
+            img = img.resize(new_size, Image.BILINEAR)
+
+        self._img_width = img.width
+        self._img_height = img.height
+
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=self._quality)
+        return {
+            "data": base64.b64encode(buf.getvalue()).decode("ascii"),
+            "width": img.width,
+            "height": img.height,
+        }
+
     async def _capture_loop(self):
         frame_interval = 1.0 / self._target_fps
+        loop = asyncio.get_event_loop()
         try:
             with mss.mss() as sct:
                 monitor = sct.monitors[1] if len(sct.monitors) > 1 else sct.monitors[0]
@@ -135,23 +157,15 @@ class ScreenCapture:
                     screenshot = sct.grab(monitor)
                     img = Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX")
 
-                    if img.width > self._max_width:
-                        ratio = self._max_width / img.width
-                        new_size = (self._max_width, int(img.height * ratio))
-                        img = img.resize(new_size, Image.LANCZOS)
+                    self._screen_width = img.width
+                    self._screen_height = img.height
 
-                    buf = io.BytesIO()
-                    img.save(buf, format="JPEG", quality=self._quality, optimize=True)
-                    frame_data = base64.b64encode(buf.getvalue()).decode("ascii")
+                    payload = await loop.run_in_executor(None, self._encode_image, img)
 
                     await self.send({
                         "type": "screen_frame",
                         "_session_id": self._session_id,
-                        "payload": {
-                            "data": frame_data,
-                            "width": img.width,
-                            "height": img.height,
-                        }
+                        "payload": payload,
                     })
 
                     elapsed = time.monotonic() - t0
@@ -173,6 +187,12 @@ class ScreenCapture:
         finally:
             self._streaming = False
 
+    def _scale_coords(self, x, y):
+        if self._img_width > 0 and self._screen_width > 0:
+            x = int(x * self._screen_width / self._img_width)
+            y = int(y * self._screen_height / self._img_height)
+        return x, y
+
     async def handle_input(self, input_type: str, data: dict):
         if not HAS_INPUT:
             return
@@ -189,12 +209,20 @@ class ScreenCapture:
             subprocess.run(args, capture_output=True, timeout=1)
 
         if input_type == "mouse_move":
-            _run(["xdotool", "mousemove", str(int(data["x"])), str(int(data["y"]))])
+            x, y = self._scale_coords(int(data["x"]), int(data["y"]))
+            _run(["xdotool", "mousemove", str(x), str(y)])
         elif input_type == "mouse_click":
-            _run(["xdotool", "click", str(data.get("button", 1))])
+            x, y = self._scale_coords(int(data["x"]), int(data["y"]))
+            _run(["xdotool", "mousemove", "--sync", str(x), str(y),
+                  "click", str(data.get("button", 1))])
         elif input_type == "mouse_dblclick":
-            _run(["xdotool", "click", "--repeat", "2", str(data.get("button", 1))])
+            x, y = self._scale_coords(int(data["x"]), int(data["y"]))
+            _run(["xdotool", "mousemove", "--sync", str(x), str(y),
+                  "click", "--repeat", "2", str(data.get("button", 1))])
         elif input_type == "mouse_scroll":
+            if "x" in data and "y" in data:
+                x, y = self._scale_coords(int(data["x"]), int(data["y"]))
+                _run(["xdotool", "mousemove", "--sync", str(x), str(y)])
             btn = "4" if data.get("direction", "up") == "up" else "5"
             _run(["xdotool", "click", "--repeat", str(data.get("clicks", 3)), btn])
         elif input_type == "key_press":
@@ -206,21 +234,28 @@ class ScreenCapture:
             if text:
                 _run(["xdotool", "type", "--clearmodifiers", text])
         elif input_type == "mouse_down":
+            if "x" in data and "y" in data:
+                x, y = self._scale_coords(int(data["x"]), int(data["y"]))
+                _run(["xdotool", "mousemove", "--sync", str(x), str(y)])
             _run(["xdotool", "mousedown", str(data.get("button", 1))])
         elif input_type == "mouse_up":
             _run(["xdotool", "mouseup", str(data.get("button", 1))])
     def _handle_input_windows(self, input_type: str, data: dict):
         if input_type == "mouse_move":
-            x, y = int(data["x"]), int(data["y"])
+            x, y = self._scale_coords(int(data["x"]), int(data["y"]))
             user32.SetCursorPos(x, y)
 
         elif input_type == "mouse_click":
+            x, y = self._scale_coords(int(data["x"]), int(data["y"]))
+            user32.SetCursorPos(x, y)
             btn = int(data.get("button", 1))
             down, up = self._win_mouse_buttons(btn)
             self._win_send_mouse(down)
             self._win_send_mouse(up)
 
         elif input_type == "mouse_dblclick":
+            x, y = self._scale_coords(int(data["x"]), int(data["y"]))
+            user32.SetCursorPos(x, y)
             btn = int(data.get("button", 1))
             down, up = self._win_mouse_buttons(btn)
             for _ in range(2):
@@ -228,6 +263,9 @@ class ScreenCapture:
                 self._win_send_mouse(up)
 
         elif input_type == "mouse_down":
+            if "x" in data and "y" in data:
+                x, y = self._scale_coords(int(data["x"]), int(data["y"]))
+                user32.SetCursorPos(x, y)
             down, _ = self._win_mouse_buttons(int(data.get("button", 1)))
             self._win_send_mouse(down)
 
@@ -236,6 +274,9 @@ class ScreenCapture:
             self._win_send_mouse(up)
 
         elif input_type == "mouse_scroll":
+            if "x" in data and "y" in data:
+                x, y = self._scale_coords(int(data["x"]), int(data["y"]))
+                user32.SetCursorPos(x, y)
             direction = data.get("direction", "up")
             clicks = int(data.get("clicks", 3))
             amount = WHEEL_DELTA * clicks * (1 if direction == "up" else -1)
