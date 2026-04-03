@@ -14,8 +14,11 @@ if not IS_WINDOWS:
     import struct
     import fcntl
     import termios
-class ShellManager:
-    def __init__(self, send_callback):
+
+
+class ShellInstance:
+    def __init__(self, shell_id: str, send_callback):
+        self.shell_id = shell_id
         self.send = send_callback
         self.master_fd = None
         self.pid = None
@@ -60,7 +63,7 @@ class ShellManager:
             fcntl.fcntl(self.master_fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
             self._reader_task = asyncio.create_task(self._read_loop_linux())
-            logger.info(f"Shell started (pid={child_pid})")
+            logger.info(f"Shell {self.shell_id} started (pid={child_pid})")
 
     async def _start_windows(self, cols, rows):
         if self._process is not None:
@@ -82,7 +85,7 @@ class ShellManager:
         )
         self.pid = self._process.pid
         self._reader_task = asyncio.create_task(self._read_loop_windows())
-        logger.info(f"Shell started (pid={self.pid}, cmd={shell_cmd})")
+        logger.info(f"Shell {self.shell_id} started (pid={self.pid}, cmd={shell_cmd})")
 
     async def _read_loop_linux(self):
         loop = asyncio.get_event_loop()
@@ -113,13 +116,13 @@ class ShellManager:
         except asyncio.CancelledError:
             pass
         except Exception as e:
-            logger.error(f"Shell read error: {e}")
+            logger.error(f"Shell {self.shell_id} read error: {e}")
         finally:
-            logger.info("Shell read loop ended")
+            logger.info(f"Shell {self.shell_id} read loop ended")
             self._cleanup()
             await self.send({
                 "type": "shell_output",
-                "payload": {"data": "\r\n[Shell exited. Will restart on next input.]\r\n"}
+                "payload": {"data": "\r\n[Shell exited. Press Enter to restart.]\r\n"}
             })
 
     async def _read_loop_windows(self):
@@ -129,7 +132,7 @@ class ShellManager:
                 if not data:
                     break
                 text = data.decode("utf-8", errors="replace")
-                text = text.replace("\r\n", "\r\n").replace("\n", "\r\n")
+                text = text.replace("\n", "\r\n")
                 await self.send({
                     "type": "shell_output",
                     "payload": {"data": text}
@@ -137,13 +140,13 @@ class ShellManager:
         except asyncio.CancelledError:
             pass
         except Exception as e:
-            logger.error(f"Shell read error: {e}")
+            logger.error(f"Shell {self.shell_id} read error: {e}")
         finally:
-            logger.info("Shell read loop ended")
+            logger.info(f"Shell {self.shell_id} read loop ended")
             self._cleanup()
             await self.send({
                 "type": "shell_output",
-                "payload": {"data": "\r\n[Shell exited. Will restart on next input.]\r\n"}
+                "payload": {"data": "\r\n[Shell exited. Press Enter to restart.]\r\n"}
             })
 
     async def write(self, data: str):
@@ -154,19 +157,19 @@ class ShellManager:
                     self._process.stdin.write(win_data.encode("utf-8"))
                     await self._process.stdin.drain()
                 except (OSError, BrokenPipeError) as e:
-                    logger.error(f"Shell write error: {e}")
+                    logger.error(f"Shell {self.shell_id} write error: {e}")
                     self._cleanup()
         else:
             if self.master_fd is not None:
                 try:
                     os.write(self.master_fd, data.encode("utf-8"))
                 except OSError as e:
-                    logger.error(f"Shell write error: {e}")
+                    logger.error(f"Shell {self.shell_id} write error: {e}")
                     self._cleanup()
 
     def resize(self, cols: int, rows: int):
         if IS_WINDOWS:
-            return  # Windows subprocess doesn't support resize
+            return
         if self.master_fd is not None:
             try:
                 winsize = struct.pack("HHHH", rows, cols, 0, 0)
@@ -202,3 +205,49 @@ class ShellManager:
         if self._reader_task:
             self._reader_task.cancel()
         self._cleanup()
+
+
+class ShellManager:
+    def __init__(self, send_callback):
+        self._send_raw = send_callback
+        self.shells: dict[str, ShellInstance] = {}
+
+    def _make_send(self, shell_id: str):
+        async def send(msg: dict):
+            if "payload" in msg:
+                msg["payload"]["shell_id"] = shell_id
+            await self._send_raw(msg)
+        return send
+
+    async def create(self, shell_id: str, cols: int = 120, rows: int = 30):
+        if shell_id in self.shells:
+            return
+        instance = ShellInstance(shell_id, self._make_send(shell_id))
+        self.shells[shell_id] = instance
+        await instance.start(cols, rows)
+
+    async def write(self, shell_id: str, data: str, cols: int = 120, rows: int = 30):
+        if shell_id not in self.shells:
+            await self.create(shell_id, cols, rows)
+        instance = self.shells[shell_id]
+        if instance.pid is None:
+            await instance.start(cols, rows)
+        await instance.write(data)
+
+    def resize(self, shell_id: str, cols: int, rows: int):
+        instance = self.shells.get(shell_id)
+        if instance:
+            instance.resize(cols, rows)
+
+    async def close(self, shell_id: str):
+        instance = self.shells.pop(shell_id, None)
+        if instance:
+            instance.stop()
+
+    def list_shells(self) -> list:
+        return [{"id": sid, "alive": inst.pid is not None} for sid, inst in self.shells.items()]
+
+    def stop_all(self):
+        for instance in self.shells.values():
+            instance.stop()
+        self.shells.clear()

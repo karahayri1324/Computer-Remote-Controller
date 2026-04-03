@@ -16,7 +16,7 @@ router = APIRouter()
 BROADCAST_TYPES = {"shell_output"}
 SESSION_ROUTED_TYPES = {"file_list_res", "file_download_chunk", "file_upload_ack", "sysinfo_res",
                         "screen_frame", "screen_error", "screen_check_res"}
-AGENT_FORWARD_TYPES = {"shell_input", "shell_resize",
+AGENT_FORWARD_TYPES = {"shell_input", "shell_resize", "shell_create", "shell_close",
                        "file_list_req", "file_download_req",
                        "file_upload_start", "file_upload_chunk",
                        "sysinfo_req",

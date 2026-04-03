@@ -13,6 +13,7 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 async def main():
     config = load_config()
     sysinfo = SystemInfo(cache_ttl=config.sysinfo_cache_seconds)
@@ -34,17 +35,29 @@ async def main():
 
         try:
             if t == "shell_input":
-                if shell.pid is None:
-                    await shell.start(config.shell_default_cols, config.shell_default_rows)
-                await shell.write(p.get("data", ""))
+                shell_id = p.get("shell_id", "1")
+                await shell.write(shell_id, p.get("data", ""),
+                                  config.shell_default_cols, config.shell_default_rows)
 
             elif t == "shell_resize":
+                shell_id = p.get("shell_id", "1")
                 cols = p.get("cols", config.shell_default_cols)
                 rows = p.get("rows", config.shell_default_rows)
-                if shell.pid is None:
-                    await shell.start(cols, rows)
+                if shell_id not in shell.shells:
+                    await shell.create(shell_id, cols, rows)
                 else:
-                    shell.resize(cols, rows)
+                    shell.resize(shell_id, cols, rows)
+
+            elif t == "shell_create":
+                shell_id = p.get("shell_id", "1")
+                cols = p.get("cols", config.shell_default_cols)
+                rows = p.get("rows", config.shell_default_rows)
+                await shell.create(shell_id, cols, rows)
+
+            elif t == "shell_close":
+                shell_id = p.get("shell_id")
+                if shell_id:
+                    await shell.close(shell_id)
 
             elif t == "file_list_req":
                 await files.list_directory(p.get("path", "/"), rid, sid)
@@ -108,5 +121,6 @@ async def main():
     conn.handler = handle_message
     logger.info("Agent starting...")
     await conn.run_forever()
+
 if __name__ == "__main__":
     asyncio.run(main())

@@ -27,8 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast(msg.payload.message, 'error');
     });
 
-    const terminalUI = new TerminalUI(document.getElementById('terminal-container'), ws);
-    terminalUI.init();
+    const terminalMgr = new TerminalManager(ws);
+    terminalMgr.init();
 
     const fileBrowser = new FileBrowser(ws, showToast);
 
@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!btn) return;
             const key = btn.dataset.key;
             if (key) {
-                ws.send('shell_input', { data: key });
+                ws.send('shell_input', { shell_id: terminalMgr.activeId, data: key });
                 btn.style.background = 'var(--accent)';
                 btn.style.color = 'var(--bg-primary)';
                 setTimeout(() => {
@@ -66,8 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
         tabContents.forEach(tc => tc.classList.toggle('active', tc.id === 'tab-' + tabName));
 
         if (tabName === 'terminal') {
-            terminalUI.fit();
-            terminalUI.focus();
+            terminalMgr.fit();
+            terminalMgr.focus();
         } else if (tabName === 'files') {
             fileBrowser.navigate(fileBrowser.currentPath);
         } else if (tabName === 'dashboard') {
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (visualViewport) {
         visualViewport.addEventListener('resize', () => {
             document.body.style.height = visualViewport.height + 'px';
-            setTimeout(() => terminalUI.fit(), 50);
+            setTimeout(() => terminalMgr.fit(), 50);
         });
     }
 

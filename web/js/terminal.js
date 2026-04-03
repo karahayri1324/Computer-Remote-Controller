@@ -1,15 +1,39 @@
-class TerminalUI {
-    constructor(containerEl, ws) {
+class TerminalManager {
+    constructor(ws) {
         this.ws = ws;
-        this.container = containerEl;
-        this.term = null;
-        this.fitAddon = null;
+        this.terminals = {};
+        this.activeId = null;
+        this._nextId = 1;
         this._resizeTimeout = null;
         this._isMobile = window.innerWidth <= 768;
+
+        this.tabBar = document.getElementById('terminal-tab-list');
+        this.addBtn = document.getElementById('terminal-add-btn');
+        this.panelsEl = document.getElementById('terminal-panels');
+
+        this.ws.on('shell_output', (msg) => {
+            const shellId = msg.payload.shell_id || '1';
+            const t = this.terminals[shellId];
+            if (t) {
+                t.term.write(msg.payload.data);
+            }
+        });
+
+        this.addBtn.addEventListener('click', () => this.createTerminal());
     }
 
     init() {
-        this.term = new Terminal({
+        this.createTerminal();
+    }
+
+    createTerminal() {
+        const shellId = String(this._nextId++);
+
+        const el = document.createElement('div');
+        el.className = 'terminal-panel';
+        this.panelsEl.appendChild(el);
+
+        const term = new Terminal({
             cursorBlink: true,
             fontSize: this._isMobile ? 12 : 14,
             fontFamily: "'Fira Code', 'Courier New', monospace",
@@ -40,49 +64,105 @@ class TerminalUI {
             scrollOnUserInput: true,
         });
 
-        this.fitAddon = new FitAddon.FitAddon();
-        this.term.loadAddon(this.fitAddon);
-        this.term.open(this.container);
+        const fitAddon = new FitAddon.FitAddon();
+        term.loadAddon(fitAddon);
+        term.open(el);
 
-        setTimeout(() => this.fit(), 100);
-
-        this.term.onData((data) => {
-            this.ws.send('shell_input', { data });
+        term.onData((data) => {
+            this.ws.send('shell_input', { shell_id: shellId, data });
         });
 
-        this.ws.on('shell_output', (msg) => {
-            this.term.write(msg.payload.data);
+        const tab = document.createElement('div');
+        tab.className = 'terminal-tab';
+        tab.dataset.shellId = shellId;
+        const label = document.createElement('span');
+        label.textContent = shellId;
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'terminal-tab-close';
+        closeBtn.innerHTML = '&times;';
+        tab.appendChild(label);
+        tab.appendChild(closeBtn);
+
+        label.addEventListener('click', () => this.switchTo(shellId));
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.closeTerminal(shellId);
         });
+        this.tabBar.appendChild(tab);
 
         const ro = new ResizeObserver(() => {
-            clearTimeout(this._resizeTimeout);
-            this._resizeTimeout = setTimeout(() => this.fit(), 50);
+            if (this.activeId === shellId) {
+                clearTimeout(this._resizeTimeout);
+                this._resizeTimeout = setTimeout(() => this.fit(), 50);
+            }
         });
-        ro.observe(this.container);
+        ro.observe(el);
 
         if (this._isMobile) {
-            this.container.addEventListener('touchstart', (e) => {
-                const textarea = this.container.querySelector('.xterm-helper-textarea');
-                if (textarea) {
-                    textarea.focus();
-                    textarea.click();
-                }
+            el.addEventListener('touchstart', () => {
+                const textarea = el.querySelector('.xterm-helper-textarea');
+                if (textarea) { textarea.focus(); textarea.click(); }
             }, { passive: true });
+        }
+
+        this.terminals[shellId] = { term, fitAddon, el, tab, ro };
+
+        this.ws.send('shell_create', { shell_id: shellId });
+        this.switchTo(shellId);
+        setTimeout(() => this.fit(), 100);
+    }
+
+    closeTerminal(shellId) {
+        if (Object.keys(this.terminals).length <= 1) return;
+
+        const t = this.terminals[shellId];
+        if (!t) return;
+
+        this.ws.send('shell_close', { shell_id: shellId });
+
+        t.ro.disconnect();
+        t.term.dispose();
+        t.el.remove();
+        t.tab.remove();
+        delete this.terminals[shellId];
+
+        if (this.activeId === shellId) {
+            const ids = Object.keys(this.terminals);
+            this.switchTo(ids[ids.length - 1]);
         }
     }
 
+    switchTo(shellId) {
+        const t = this.terminals[shellId];
+        if (!t) return;
+
+        for (const [id, entry] of Object.entries(this.terminals)) {
+            entry.el.style.display = id === shellId ? '' : 'none';
+            entry.tab.classList.toggle('active', id === shellId);
+        }
+
+        this.activeId = shellId;
+        setTimeout(() => {
+            this.fit();
+            t.term.focus();
+        }, 10);
+    }
+
     fit() {
-        if (!this.fitAddon || !this.term) return;
+        const t = this.terminals[this.activeId];
+        if (!t) return;
         try {
-            this.fitAddon.fit();
+            t.fitAddon.fit();
             this.ws.send('shell_resize', {
-                cols: this.term.cols,
-                rows: this.term.rows,
+                shell_id: this.activeId,
+                cols: t.term.cols,
+                rows: t.term.rows,
             });
         } catch (e) {}
     }
 
     focus() {
-        if (this.term) this.term.focus();
+        const t = this.terminals[this.activeId];
+        if (t) t.term.focus();
     }
 }
