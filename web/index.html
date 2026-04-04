@@ -55,6 +55,12 @@
             transition: border-color 0.2s;
         }
         input:focus { border-color: #7aa2f7; }
+        .code-input {
+            text-align: center;
+            font-size: 1.5rem;
+            letter-spacing: 8px;
+            font-family: 'Fira Code', monospace;
+        }
         button {
             width: 100%;
             padding: 12px;
@@ -70,6 +76,15 @@
         }
         button:hover { background: #89b4fa; }
         button:disabled { background: #3b4261; cursor: not-allowed; }
+        .back-btn {
+            background: transparent;
+            color: #565f89;
+            border: 1px solid #3b4261;
+            margin-top: 12px;
+            font-weight: 400;
+            font-size: 0.85rem;
+        }
+        .back-btn:hover { color: #a9b1d6; border-color: #565f89; }
         .error {
             color: #f7768e;
             font-size: 0.85rem;
@@ -77,12 +92,25 @@
             margin-top: 12px;
             min-height: 20px;
         }
+        .tfa-info {
+            text-align: center;
+            color: #565f89;
+            font-size: 0.82rem;
+            margin-bottom: 20px;
+        }
+        .tfa-info svg {
+            display: block;
+            margin: 0 auto 12px;
+        }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
     <div class="login-card">
         <h1>RemoteController</h1>
         <p class="subtitle">Access your PC from anywhere</p>
+
+        <!-- Step 1: Username + Password -->
         <form id="login-form">
             <div class="form-group">
                 <label for="login-user">Username</label>
@@ -94,13 +122,36 @@
             </div>
             <button type="submit" id="login-btn">Login</button>
         </form>
+
+        <!-- Step 2: 2FA Code -->
+        <form id="tfa-form" class="hidden">
+            <div class="tfa-info">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#7aa2f7" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                Two-Factor Authentication
+            </div>
+            <div class="form-group">
+                <label for="tfa-code">Enter 6-digit code from your authenticator app</label>
+                <input type="text" id="tfa-code" class="code-input" maxlength="6" inputmode="numeric"
+                       pattern="[0-9]*" autocomplete="one-time-code" autofocus>
+            </div>
+            <button type="submit" id="tfa-btn">Verify</button>
+            <button type="button" class="back-btn" id="tfa-back">Back to login</button>
+        </form>
+
         <p class="error" id="error-msg"></p>
     </div>
 
     <script>
         const errorMsg = document.getElementById('error-msg');
+        const loginForm = document.getElementById('login-form');
+        const tfaForm = document.getElementById('tfa-form');
+        let pendingToken = null;
 
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
+        // Step 1: Login
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             errorMsg.textContent = '';
             const btn = document.getElementById('login-btn');
@@ -116,7 +167,22 @@
                     })
                 });
                 const data = await resp.json();
-                if (!resp.ok) { errorMsg.textContent = data.error || 'Login failed'; return; }
+                if (!resp.ok) {
+                    errorMsg.textContent = data.error || 'Login failed';
+                    return;
+                }
+
+                if (data.requires_2fa) {
+                    // Show 2FA step
+                    pendingToken = data.pending_token;
+                    loginForm.classList.add('hidden');
+                    tfaForm.classList.remove('hidden');
+                    document.getElementById('tfa-code').value = '';
+                    document.getElementById('tfa-code').focus();
+                    return;
+                }
+
+                // No 2FA - direct login
                 sessionStorage.setItem('access_token', data.access_token);
                 sessionStorage.setItem('username', data.username);
                 window.location.href = '/app.html';
@@ -125,6 +191,56 @@
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Login';
+            }
+        });
+
+        // Step 2: 2FA verification
+        tfaForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMsg.textContent = '';
+            const btn = document.getElementById('tfa-btn');
+            btn.disabled = true;
+            btn.textContent = 'Verifying...';
+            try {
+                const resp = await fetch('/api/login/2fa', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        pending_token: pendingToken,
+                        code: document.getElementById('tfa-code').value.trim(),
+                    })
+                });
+                const data = await resp.json();
+                if (!resp.ok) {
+                    errorMsg.textContent = data.error || 'Verification failed';
+                    document.getElementById('tfa-code').value = '';
+                    document.getElementById('tfa-code').focus();
+                    return;
+                }
+                sessionStorage.setItem('access_token', data.access_token);
+                sessionStorage.setItem('username', data.username);
+                window.location.href = '/app.html';
+            } catch (err) {
+                errorMsg.textContent = 'Connection error';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Verify';
+            }
+        });
+
+        // Back button
+        document.getElementById('tfa-back').addEventListener('click', () => {
+            tfaForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+            errorMsg.textContent = '';
+            pendingToken = null;
+        });
+
+        // Auto-submit when 6 digits entered
+        document.getElementById('tfa-code').addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/\D/g, '');
+            if (e.target.value.length === 6) {
+                tfaForm.dispatchEvent(new Event('submit'));
             }
         });
 

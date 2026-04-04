@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileBrowser = new FileBrowser(ws, showToast);
 
     const dashboard = new Dashboard(ws);
+    const settings = new Settings();
 
     const isDesktop = window.innerWidth > 768;
     let remoteScreen = null;

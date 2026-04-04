@@ -24,8 +24,79 @@
             <button data-tab="dashboard">System</button>
             <button data-tab="screen" class="desktop-only">Screen</button>
         </nav>
+        <button id="settings-btn" title="Settings">&#9881;</button>
         <button id="logout-btn">Logout</button>
     </header>
+
+    <!-- Settings Modal -->
+    <div id="settings-overlay" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button class="modal-close" id="settings-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Change Password -->
+                <div class="settings-section">
+                    <h3>Change Password</h3>
+                    <form id="pw-form">
+                        <div class="settings-field">
+                            <label>Current Password</label>
+                            <input type="password" id="pw-old" autocomplete="current-password">
+                        </div>
+                        <div class="settings-field">
+                            <label>New Password</label>
+                            <input type="password" id="pw-new" autocomplete="new-password">
+                        </div>
+                        <div class="settings-field">
+                            <label>Confirm New Password</label>
+                            <input type="password" id="pw-confirm" autocomplete="new-password">
+                        </div>
+                        <button type="submit" class="settings-btn">Change Password</button>
+                        <div class="settings-msg" id="pw-msg"></div>
+                    </form>
+                </div>
+
+                <!-- Two-Factor Authentication -->
+                <div class="settings-section">
+                    <h3>Two-Factor Authentication</h3>
+                    <div id="tfa-status-area">
+                        <p id="tfa-status-text" style="color:var(--text-muted);font-size:0.85rem;margin-bottom:12px">Loading...</p>
+                        <button id="tfa-toggle-btn" class="settings-btn" style="display:none">Enable 2FA</button>
+                    </div>
+                    <!-- 2FA Setup Flow -->
+                    <div id="tfa-setup-area" class="hidden">
+                        <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:12px">
+                            Scan this QR code with Google Authenticator, Authy, or any TOTP app:
+                        </p>
+                        <div id="tfa-qr" style="text-align:center;margin-bottom:12px;background:white;border-radius:8px;padding:12px;display:inline-block"></div>
+                        <div style="margin-bottom:12px">
+                            <label style="font-size:0.75rem;color:var(--text-muted)">Or enter this key manually:</label>
+                            <input type="text" id="tfa-secret" readonly style="font-family:monospace;font-size:0.85rem;letter-spacing:2px;text-align:center;cursor:text">
+                        </div>
+                        <div class="settings-field">
+                            <label>Enter the 6-digit code to verify:</label>
+                            <input type="text" id="tfa-verify-code" maxlength="6" inputmode="numeric"
+                                   pattern="[0-9]*" style="text-align:center;font-size:1.2rem;letter-spacing:6px">
+                        </div>
+                        <button id="tfa-verify-btn" class="settings-btn">Verify & Enable</button>
+                        <button id="tfa-cancel-btn" class="settings-btn" style="background:transparent;color:var(--text-muted);border:1px solid var(--border)">Cancel</button>
+                        <div class="settings-msg" id="tfa-msg"></div>
+                    </div>
+                    <!-- 2FA Disable Flow -->
+                    <div id="tfa-disable-area" class="hidden">
+                        <div class="settings-field">
+                            <label>Enter your password to disable 2FA:</label>
+                            <input type="password" id="tfa-disable-pw">
+                        </div>
+                        <button id="tfa-disable-confirm-btn" class="settings-btn" style="background:var(--danger)">Disable 2FA</button>
+                        <button id="tfa-disable-cancel-btn" class="settings-btn" style="background:transparent;color:var(--text-muted);border:1px solid var(--border)">Cancel</button>
+                        <div class="settings-msg" id="tfa-disable-msg"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <main>
         <section id="tab-terminal" class="tab-content active">
@@ -97,6 +168,7 @@
     <script src="/js/files.js"></script>
     <script src="/js/dashboard.js"></script>
     <script src="/js/screen.js"></script>
+    <script src="/js/settings.js"></script>
     <script src="/js/app.js"></script>
 </body>
 </html>
