@@ -206,7 +206,7 @@ class ScreenCapture:
             logger.error(f"Input handling error: {e}")
     def _handle_input_linux(self, input_type: str, data: dict):
         def _run(args):
-            subprocess.run(args, capture_output=True, timeout=1)
+            subprocess.run(args, capture_output=True, timeout=2)
 
         if input_type == "mouse_move":
             x, y = self._scale_coords(int(data["x"]), int(data["y"]))
@@ -218,21 +218,24 @@ class ScreenCapture:
         elif input_type == "mouse_dblclick":
             x, y = self._scale_coords(int(data["x"]), int(data["y"]))
             _run(["xdotool", "mousemove", "--sync", str(x), str(y),
-                  "click", "--repeat", "2", str(data.get("button", 1))])
+                  "click", "--repeat", "2", "--delay", "50",
+                  str(data.get("button", 1))])
         elif input_type == "mouse_scroll":
             if "x" in data and "y" in data:
                 x, y = self._scale_coords(int(data["x"]), int(data["y"]))
                 _run(["xdotool", "mousemove", "--sync", str(x), str(y)])
             btn = "4" if data.get("direction", "up") == "up" else "5"
-            _run(["xdotool", "click", "--repeat", str(data.get("clicks", 3)), btn])
+            clicks = int(data.get("clicks", 3))
+            clicks = max(1, min(clicks, 20))
+            _run(["xdotool", "click", "--repeat", str(clicks), "--delay", "8", btn])
         elif input_type == "key_press":
             key = data.get("key", "")
             if key:
-                _run(["xdotool", "key", key])
+                _run(["xdotool", "key", "--delay", "0", key])
         elif input_type == "key_type":
             text = data.get("text", "")
             if text:
-                _run(["xdotool", "type", "--clearmodifiers", text])
+                _run(["xdotool", "type", "--delay", "0", "--clearmodifiers", text])
         elif input_type == "mouse_down":
             if "x" in data and "y" in data:
                 x, y = self._scale_coords(int(data["x"]), int(data["y"]))
@@ -279,6 +282,7 @@ class ScreenCapture:
                 user32.SetCursorPos(x, y)
             direction = data.get("direction", "up")
             clicks = int(data.get("clicks", 3))
+            clicks = max(1, min(clicks, 20))
             amount = WHEEL_DELTA * clicks * (1 if direction == "up" else -1)
             inp = INPUT(type=INPUT_MOUSE)
             inp.union.mi.dwFlags = MOUSEEVENTF_WHEEL

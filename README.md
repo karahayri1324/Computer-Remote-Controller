@@ -27,21 +27,35 @@ cd RemoteController
 
 ### 2. Run Setup
 
+**Linux / macOS:**
 ```bash
 ./setup.sh
 ```
 
+**Windows (CMD or PowerShell):**
+```cmd
+setup.bat
+```
+
 It will ask you for:
 - **Relay URL** - The server address (press Enter for default)
-- **Agent token** - Secret key from the server admin
+- **Username & Password** - Your account credentials
 
 Setup automatically installs all dependencies.
 
 ### 3. Start
 
+**Linux / macOS:**
 ```bash
 ./start.sh
 ```
+
+**Windows:**
+```cmd
+start.bat
+```
+
+> **Tip:** On Windows you can also run `agent\start.bat` to start the agent in the background (no console window).
 
 ### 4. Open on Phone
 
@@ -50,7 +64,8 @@ Go to the relay server URL in your phone browser, enter your password, done.
 ## What You Need
 
 - **Python 3.10+** on your PC
-- **Agent token** from the relay server admin
+  - Windows: Download from [python.org](https://python.org/downloads) — check **"Add Python to PATH"** during install
+  - Linux: `sudo apt install python3 python3-pip`
 
 Optional (for remote desktop):
 - Linux: `xdotool` (auto-installed by setup.sh)
@@ -62,8 +77,10 @@ Optional (for remote desktop):
 relay/          # Relay server (managed by admin on VPS)
 agent/          # Agent (runs on your PC)
 web/            # Web UI (served by relay, opens on phone)
-setup.sh        # One-time setup script
-start.sh        # Start the agent
+setup.sh        # One-time setup (Linux/macOS)
+setup.bat       # One-time setup (Windows)
+start.sh        # Start agent (Linux/macOS)
+start.bat       # Start agent (Windows)
 ```
 
 ## Security
