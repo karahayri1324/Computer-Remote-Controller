@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RemoteController - Control Your PC From Anywhere</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #1a1b26;
+            --bg2: #24283b;
+            --bg3: #1e2030;
+            --accent: #7aa2f7;
+            --accent2: #89b4fa;
+            --accent-glow: rgba(122, 162, 247, 0.15);
+            --green: #9ece6a;
+            --purple: #bb9af7;
+            --orange: #ff9e64;
+            --pink: #f7768e;
+            --text: #c0caf5;
+            --text-dim: #565f89;
+            --text-muted: #7982a9;
+            --border: #3b4261;
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            overflow-x: hidden;
+        }
+        a { color: var(--accent); text-decoration: none; }
+
+        /* ── Nav ── */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0;
+            background: rgba(26, 27, 38, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+            padding: 0 24px;
+        }
+        .nav-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+        }
+        .logo {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: -0.5px;
+        }
+        .logo span { color: var(--text-dim); font-weight: 400; }
+        .nav-links { display: flex; gap: 28px; align-items: center; }
+        .nav-links a { color: var(--text-muted); font-size: 0.85rem; transition: color 0.2s; }
+        .nav-links a:hover { color: var(--text); }
+        .nav-cta {
+            background: var(--accent);
+            color: var(--bg) !important;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+        .nav-cta:hover { background: var(--accent2); }
+
+        /* ── Hero ── */
+        .hero {
+            padding: 140px 24px 80px;
+            text-align: center;
+            position: relative;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 60px; left: 50%; transform: translateX(-50%);
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .hero-badge {
+            display: inline-block;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-size: 0.78rem;
+            color: var(--accent);
+            margin-bottom: 24px;
+        }
+        .hero h1 {
+            font-size: clamp(2.2rem, 5vw, 3.6rem);
+            font-weight: 800;
+            line-height: 1.15;
+            color: #fff;
+            margin-bottom: 20px;
+            letter-spacing: -1px;
+        }
+        .hero h1 .gradient {
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-sub {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            max-width: 560px;
+            margin: 0 auto 36px;
+            line-height: 1.6;
+        }
+        .hero-buttons {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg);
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 8px 24px var(--accent-glow); }
+        .btn-secondary {
+            background: var(--bg2);
+            color: var(--text);
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+        .btn-secondary:hover { border-color: var(--text-muted); }
+
+        /* ── Terminal Demo ── */
+        .terminal-demo {
+            max-width: 680px;
+            margin: 60px auto 0;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+        }
+        .terminal-bar {
+            background: var(--bg3);
+            padding: 10px 16px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .terminal-dot.r { background: var(--pink); }
+        .terminal-dot.y { background: var(--orange); }
+        .terminal-dot.g { background: var(--green); }
+        .terminal-body {
+            padding: 20px 24px;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
+        }
+        .terminal-body .prompt { color: var(--green); }
+        .terminal-body .cmd { color: var(--text); }
+        .terminal-body .output { color: var(--text-dim); }
+        .terminal-body .success { color: var(--green); }
+        .terminal-body .accent { color: var(--accent); }
+
+        /* ── Features ── */
+        .features {
+            padding: 100px 24px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .section-label {
+            text-align: center;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+        .section-title {
+            text-align: center;
+            font-size: clamp(1.6rem, 3vw, 2.4rem);
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 16px;
+        }
+        .section-sub {
+            text-align: center;
+            color: var(--text-muted);
+            max-width: 520px;
+            margin: 0 auto 56px;
+            font-size: 1rem;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .feature-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px;
+            transition: all 0.3s;
+        }
+        .feature-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--accent-glow);
+        }
+        .feature-icon {
+            width: 44px; height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            margin-bottom: 16px;
+        }
+        .fi-blue { background: rgba(122, 162, 247, 0.12); }
+        .fi-green { background: rgba(158, 206, 106, 0.12); }
+        .fi-purple { background: rgba(187, 154, 247, 0.12); }
+        .fi-orange { background: rgba(255, 158, 100, 0.12); }
+        .fi-pink { background: rgba(247, 118, 142, 0.12); }
+        .fi-cyan { background: rgba(125, 207, 255, 0.12); }
+        .feature-card h3 {
+            font-size: 1rem;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        .feature-card p {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* ── How It Works ── */
+        .how-it-works {
+            padding: 80px 24px 100px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .steps {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            position: relative;
+        }
+        .steps::before {
+            content: '';
+            position: absolute;
+            left: 28px;
+            top: 44px;
+            bottom: 44px;
+            width: 2px;
+            background: var(--border);
+        }
+        .step {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+            padding: 24px 0;
+        }
+        .step-num {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            background: var(--bg2);
+            border: 2px solid var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent);
+            flex-shrink: 0;
+            z-index: 1;
+        }
+        .step-content h3 {
+            font-size: 1.1rem;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+        .step-content p {
+            color: var(--text-muted);
+            font-size: 0.92rem;
+            line-height: 1.6;
+        }
+
+        /* ── Security ── */
+        .security {
+            padding: 80px 24px;
+            background: var(--bg3);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+        .security-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .security-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
+            margin-top: 48px;
+        }
+        .sec-item {
+            text-align: center;
+            padding: 24px 16px;
+        }
+        .sec-icon {
+            font-size: 2rem;
+            margin-bottom: 14px;
+        }
+        .sec-item h4 {
+            color: #fff;
+            font-size: 0.95rem;
+            margin-bottom: 6px;
+        }
+        .sec-item p {
+            color: var(--text-dim);
+            font-size: 0.82rem;
+            line-height: 1.5;
+        }
+
+        /* ── CTA ── */
+        .cta {
+            padding: 100px 24px;
+            text-align: center;
+        }
+        .cta h2 {
+            font-size: clamp(1.8rem, 3vw, 2.6rem);
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 16px;
+        }
+        .cta p {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            margin-bottom: 32px;
+        }
+
+        /* ── Footer ── */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 32px 24px;
+            text-align: center;
+        }
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .footer-links a { color: var(--text-dim); font-size: 0.82rem; }
+        .footer-links a:hover { color: var(--text); }
+        .copyright { color: var(--text-dim); font-size: 0.78rem; }
+
+        /* ── Mobile ── */
+        @media (max-width: 640px) {
+            .nav-links a:not(.nav-cta) { display: none; }
+            .hero { padding: 120px 20px 60px; }
+            .hero-buttons { flex-direction: column; align-items: center; }
+            .btn-primary, .btn-secondary { width: 100%; max-width: 300px; text-align: center; display: block; }
+            .terminal-demo { margin: 40px 8px 0; }
+            .terminal-body { font-size: 0.75rem; padding: 16px; }
+            .features-grid { grid-template-columns: 1fr; }
+            .steps::before { left: 27px; }
+            .step { gap: 16px; }
+            .step-num { width: 48px; height: 48px; font-size: 1rem; }
+        }
+
+        /* ── Animations ── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .hero-badge, .hero h1, .hero-sub, .hero-buttons, .terminal-demo {
+            animation: fadeUp 0.6s ease-out both;
+        }
+        .hero h1 { animation-delay: 0.1s; }
+        .hero-sub { animation-delay: 0.2s; }
+        .hero-buttons { animation-delay: 0.3s; }
+        .terminal-demo { animation-delay: 0.4s; }
+    </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+    <div class="nav-inner">
+        <div class="logo">Remote<span>Controller</span></div>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#how">How It Works</a>
+            <a href="#security">Security</a>
+            <a href="/index.html" class="nav-cta">Login</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+    <div class="hero-badge">Self-Hosted &middot; Open Source &middot; Secure</div>
+    <h1>Control Your PC<br><span class="gradient">From Anywhere</span></h1>
+    <p class="hero-sub">Access your computer's desktop, terminal, and files from your phone or tablet. No third-party servers. No subscriptions. Just you and your machine.</p>
+    <div class="hero-buttons">
+        <a href="/index.html" class="btn-primary">Get Started</a>
+        <a href="#how" class="btn-secondary">Learn More</a>
+    </div>
+
+    <div class="terminal-demo">
+        <div class="terminal-bar">
+            <div class="terminal-dot r"></div>
+            <div class="terminal-dot y"></div>
+            <div class="terminal-dot g"></div>
+        </div>
+        <div class="terminal-body">
+            <div><span class="prompt">$</span> <span class="cmd">python install_service.py</span></div>
+            <div><span class="output">Installing dependencies...</span></div>
+            <div><span class="output">Dependencies installed.</span></div>
+            <div><span class="success">[OK]</span> <span class="output">Service installed and started.</span></div>
+            <div>&nbsp;</div>
+            <div><span class="prompt">$</span> <span class="cmd">systemctl status remotecontroller</span></div>
+            <div><span class="accent">&#9679;</span> <span class="output">remotecontroller.service - RemoteController Agent</span></div>
+            <div><span class="output">&nbsp;&nbsp;Active: </span><span class="success">active (running)</span></div>
+        </div>
+    </div>
+</section>
+
+<!-- Features -->
+<section class="features" id="features">
+    <div class="section-label">Features</div>
+    <h2 class="section-title">Everything You Need</h2>
+    <p class="section-sub">A complete remote access solution that runs on your own infrastructure.</p>
+
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon fi-blue">&#128421;</div>
+            <h3>Remote Desktop</h3>
+            <p>See your screen in real-time at up to 60 FPS. Click, scroll, drag, and type as if you were sitting in front of it.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon fi-green">&#62;&nbsp;_</div>
+            <h3>Multi-Terminal</h3>
+            <p>Open multiple terminal sessions simultaneously. Full PTY support with tab completion, colors, and interactive programs.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon fi-purple">&#128193;</div>
+            <h3>File Manager</h3>
+            <p>Browse, upload, and download files from your PC. Navigate your entire filesystem from your phone.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon fi-orange">&#128202;</div>
+            <h3>System Dashboard</h3>
+            <p>Monitor CPU, RAM, disk, and network usage in real-time. Know your system's health at a glance.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon fi-pink">&#128274;</div>
+            <h3>Two-Factor Auth</h3>
+            <p>Secure your access with TOTP two-factor authentication. Works with Google Authenticator and any TOTP app.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon fi-cyan">&#9889;</div>
+            <h3>Cross-Platform</h3>
+            <p>Agent runs on both Windows and Linux. Access from any modern browser on any device.</p>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="how-it-works" id="how">
+    <div class="section-label">Setup</div>
+    <h2 class="section-title">Up and Running in Minutes</h2>
+    <p class="section-sub">No complicated configuration. Three simple steps.</p>
+
+    <div class="steps">
+        <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+                <h3>Deploy the Relay</h3>
+                <p>Run the relay server on your VPS. It handles secure WebSocket communication between your phone and your PC. One command, done.</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+                <h3>Install the Agent</h3>
+                <p>Run the agent on your PC. It connects to the relay automatically, starts with your system, and runs silently in the background.</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+                <h3>Connect &amp; Control</h3>
+                <p>Open the web app on your phone, log in, and you're in. Full access to your desktop, terminal, and files from anywhere in the world.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Security -->
+<section class="security" id="security">
+    <div class="security-inner">
+        <div class="section-label">Security</div>
+        <h2 class="section-title">Built With Security First</h2>
+        <p class="section-sub">Your data never touches a third-party server. Everything stays between you and your machine.</p>
+
+        <div class="security-grid">
+            <div class="sec-item">
+                <div class="sec-icon">&#128272;</div>
+                <h4>Argon2id Hashing</h4>
+                <p>Passwords are hashed with the most secure algorithm available. Never stored in plain text.</p>
+            </div>
+            <div class="sec-item">
+                <div class="sec-icon">&#128737;</div>
+                <h4>JWT Tokens</h4>
+                <p>Cryptographically signed session tokens with automatic expiration.</p>
+            </div>
+            <div class="sec-item">
+                <div class="sec-icon">&#128241;</div>
+                <h4>TOTP 2FA</h4>
+                <p>Optional two-factor authentication adds an extra layer of protection.</p>
+            </div>
+            <div class="sec-item">
+                <div class="sec-icon">&#128167;</div>
+                <h4>Zero Data Retention</h4>
+                <p>Screen, terminal, and file data is relayed in real-time. Nothing is stored.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+    <h2>Ready to Take Control?</h2>
+    <p>Access your PC from anywhere. No subscriptions, no limits.</p>
+    <a href="/index.html" class="btn-primary">Get Started Now</a>
+</section>
+
+<!-- Footer -->
+<footer>
+    <div class="footer-links">
+        <a href="/privacy.html">Privacy Policy</a>
+        <a href="/support.html">Support</a>
+        <a href="/index.html">Login</a>
+    </div>
+    <p class="copyright">&copy; 2026 RemoteController. All rights reserved.</p>
+</footer>
+
+</body>
+</html>

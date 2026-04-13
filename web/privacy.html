@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RemoteController - Privacy Policy</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #1a1b26;
+            color: #a9b1d6;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.7;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #7aa2f7;
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+        .updated {
+            color: #565f89;
+            font-size: 0.85rem;
+            margin-bottom: 32px;
+        }
+        h2 {
+            color: #c0caf5;
+            font-size: 1.1rem;
+            margin-top: 28px;
+            margin-bottom: 10px;
+        }
+        p, li {
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+        }
+        ul {
+            padding-left: 24px;
+            margin-bottom: 12px;
+        }
+        li { margin-bottom: 6px; }
+        a {
+            color: #7aa2f7;
+            text-decoration: none;
+        }
+        a:hover { text-decoration: underline; }
+        .back {
+            display: inline-block;
+            margin-top: 32px;
+            padding: 10px 20px;
+            background: #24283b;
+            border: 1px solid #3b4261;
+            border-radius: 8px;
+            color: #7aa2f7;
+            font-size: 0.9rem;
+        }
+        .back:hover { border-color: #7aa2f7; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Privacy Policy</h1>
+        <p class="updated">Last updated: April 12, 2026</p>
+
+        <h2>1. Overview</h2>
+        <p>RemoteController is a self-hosted remote access tool that allows you to control your personal computer from a mobile device through a secure relay server. Your privacy is important to us.</p>
+
+        <h2>2. Data We Collect</h2>
+        <ul>
+            <li><strong>Account Information:</strong> Username and password (hashed with Argon2id). Passwords are never stored in plain text.</li>
+            <li><strong>Authentication Tokens:</strong> JWT access tokens and agent tokens for session management.</li>
+            <li><strong>2FA Secrets:</strong> If enabled, TOTP secrets are stored server-side for two-factor authentication.</li>
+        </ul>
+
+        <h2>3. Data We Do NOT Collect</h2>
+        <ul>
+            <li>Screen captures are streamed in real-time and are <strong>never stored</strong> on the server.</li>
+            <li>Terminal input/output is relayed and <strong>never logged or stored</strong>.</li>
+            <li>File transfers pass through the relay and are <strong>not retained</strong>.</li>
+            <li>Mouse movements, clicks, and keyboard input are forwarded and <strong>not recorded</strong>.</li>
+            <li>We do not collect analytics, telemetry, or tracking data.</li>
+        </ul>
+
+        <h2>4. How Data Flows</h2>
+        <p>All data travels through a WebSocket relay server. The relay acts as a pass-through and does not persist any session data. The flow is:</p>
+        <p><strong>Your Phone &rarr; Relay Server &rarr; Your PC</strong></p>
+        <p>No third parties receive your data at any point.</p>
+
+        <h2>5. Data Storage</h2>
+        <ul>
+            <li>User credentials are stored in a local JSON file on the relay server.</li>
+            <li>No external databases or cloud storage services are used.</li>
+            <li>All data remains on infrastructure you control.</li>
+        </ul>
+
+        <h2>6. Security Measures</h2>
+        <ul>
+            <li>Passwords are hashed using Argon2id.</li>
+            <li>Agent tokens are verified using timing-safe comparison (HMAC).</li>
+            <li>JWT tokens expire after 24 hours.</li>
+            <li>Optional two-factor authentication (TOTP) is available.</li>
+            <li>Rate limiting is applied to login and registration endpoints.</li>
+        </ul>
+
+        <h2>7. Third-Party Services</h2>
+        <p>RemoteController does not integrate with or send data to any third-party services, advertising networks, or analytics platforms.</p>
+
+        <h2>8. Your Rights</h2>
+        <p>Since this is a self-hosted application, you have full control over all data. You can delete your account and all associated data at any time by removing your entry from the server.</p>
+
+        <h2>9. Contact</h2>
+        <p>If you have questions about this privacy policy, contact the server administrator.</p>
+
+        <a href="/index.html" class="back">&larr; Back to Login</a>
+    </div>
+</body>
+</html>
