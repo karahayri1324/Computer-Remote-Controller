@@ -93,6 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
         Auth.logout();
     });
 
+
     document.getElementById('go-btn').addEventListener('click', () => {
         const path = prompt('Enter path:', fileBrowser.currentPath);
         if (path) fileBrowser.navigate(path);

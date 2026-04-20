@@ -36,6 +36,7 @@ class Settings {
         document.getElementById('tfa-verify-code').addEventListener('input', (e) => {
             e.target.value = e.target.value.replace(/\D/g, '');
         });
+
     }
 
     open() {
@@ -219,4 +220,5 @@ class Settings {
         document.getElementById('tfa-setup-area').classList.add('hidden');
         document.getElementById('tfa-disable-area').classList.add('hidden');
     }
+
 }
