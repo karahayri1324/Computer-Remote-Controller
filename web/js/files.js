@@ -8,6 +8,8 @@ class FileBrowser {
         this.uploadDrop = document.getElementById('upload-drop');
         this.fileInput = document.getElementById('file-input');
         this._downloads = {};
+        this._uploadTotal = 0;
+        this._uploadDone = 0;
 
         this.ws.on('file_list_res', (msg) => this._renderList(msg.payload));
         this.ws.on('file_download_chunk', (msg) => this._handleDownloadChunk(msg.payload));
@@ -18,7 +20,7 @@ class FileBrowser {
 
     navigate(path) {
         this.currentPath = path;
-        this.pathEl.textContent = path;
+        if (this.pathEl) this.pathEl.value = path;
         this.ws.send('file_list_req', { path });
     }
 
@@ -29,7 +31,7 @@ class FileBrowser {
         }
 
         this.currentPath = payload.path;
-        this.pathEl.textContent = payload.path;
+        if (this.pathEl) this.pathEl.value = payload.path;
         this.listEl.innerHTML = '';
 
         if (payload.path !== '/') {
@@ -59,19 +61,24 @@ class FileBrowser {
 
         const icon = document.createElement('span');
         icon.className = 'file-icon';
-        icon.textContent = entry.is_dir ? '\uD83D\uDCC1' : '\uD83D\uDCC4';
+        icon.textContent = entry.is_dir ? '📁' : this._fileIcon(entry.name);
 
         const name = document.createElement('span');
         name.className = 'file-name' + (entry.is_dir ? ' dir' : '');
         name.textContent = entry.name;
 
+        const meta = document.createElement('div');
+        meta.className = 'file-meta';
+
         const size = document.createElement('span');
         size.className = 'file-size';
         size.textContent = entry.is_dir ? '' : this._formatSize(entry.size);
 
+        meta.appendChild(size);
+
         el.appendChild(icon);
         el.appendChild(name);
-        el.appendChild(size);
+        el.appendChild(meta);
 
         el.addEventListener('click', () => {
             if (entry.is_dir) {
@@ -84,11 +91,28 @@ class FileBrowser {
         return el;
     }
 
+    _fileIcon(name) {
+        const ext = name.split('.').pop().toLowerCase();
+        const icons = {
+            'js': '📜', 'ts': '📜', 'py': '🐍',
+            'sh': '🗽', 'bat': '🗽', 'cmd': '🗽',
+            'txt': '📋', 'md': '📝', 'log': '📋',
+            'json': '📋', 'yaml': '📋', 'yml': '📋',
+            'zip': '🗄', 'tar': '🗄', 'gz': '🗄',
+            'rar': '🗄', '7z': '🗄',
+            'jpg': '🖼', 'jpeg': '🖼', 'png': '🖼',
+            'gif': '🖼', 'svg': '🖼', 'webp': '🖼',
+            'mp4': '🎥', 'mkv': '🎥', 'avi': '🎥',
+            'mp3': '🎵', 'wav': '🎵', 'flac': '🎵',
+            'pdf': '📄', 'exe': '⚙️', 'dll': '⚙️',
+        };
+        return icons[ext] || '📄';
+    }
+
     _startDownload(path, filename) {
-        const id = Math.random().toString(16).slice(2, 10);
         this._downloads[path] = { chunks: [], filename, totalChunks: null };
         this.ws.send('file_download_req', { path });
-        this.showToast(`Downloading ${filename}...`, 'success');
+        this.showToast(`Downloading ${filename}...`, 'info');
     }
 
     _handleDownloadChunk(payload) {
@@ -133,8 +157,11 @@ class FileBrowser {
     }
 
     async _uploadFiles(files) {
+        this._uploadTotal = files.length;
+        this._uploadDone = 0;
         for (const file of files) {
             await this._uploadFile(file);
+            this._uploadDone++;
         }
     }
 
@@ -142,6 +169,8 @@ class FileBrowser {
         const CHUNK_SIZE = 524288;
         const totalChunks = Math.max(1, Math.ceil(file.size / CHUNK_SIZE));
         const targetPath = (this.currentPath === '/' ? '/' : this.currentPath + '/') + file.name;
+
+        this.showToast(`Uploading ${file.name}${this._uploadTotal > 1 ? ` (${this._uploadDone + 1}/${this._uploadTotal})` : ''}...`, 'info');
 
         this.ws.send('file_upload_start', {
             path: targetPath,

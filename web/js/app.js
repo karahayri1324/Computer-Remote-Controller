@@ -1,6 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
     Auth.requireAuth();
 
+    // Show username
+    const uname = Auth.getUsername();
+    const usernameDisplay = document.getElementById('username-display');
+    if (uname && usernameDisplay) usernameDisplay.textContent = uname;
+
     const ws = new WS();
     const statusDot = document.getElementById('status-dot');
     const toastContainer = document.getElementById('toast-container');
@@ -41,6 +46,33 @@ document.addEventListener('DOMContentLoaded', () => {
         remoteScreen = new RemoteScreen(ws, showToast);
     }
 
+    // File path navigation
+    const filePathInput = document.getElementById('file-path');
+    const goBtn = document.getElementById('go-btn');
+    const fileUpBtn = document.getElementById('file-up-btn');
+
+    goBtn.addEventListener('click', () => {
+        const p = filePathInput.value.trim() || '/';
+        fileBrowser.navigate(p);
+    });
+
+    filePathInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const p = filePathInput.value.trim() || '/';
+            fileBrowser.navigate(p);
+            filePathInput.blur();
+        }
+        if (e.key === 'Escape') filePathInput.blur();
+    });
+
+    fileUpBtn.addEventListener('click', () => {
+        const cur = fileBrowser.currentPath;
+        const parent = cur === '/' ? '/' : cur.split('/').slice(0, -1).join('/') || '/';
+        fileBrowser.navigate(parent);
+    });
+
+    // Mobile keyboard bar
     const kbBar = document.getElementById('mobile-keyboard-bar');
     if (kbBar) {
         kbBar.addEventListener('click', (e) => {
@@ -77,27 +109,15 @@ document.addEventListener('DOMContentLoaded', () => {
             remoteScreen.check();
         }
 
-        if (tabName !== 'dashboard') {
-            dashboard.stopPolling();
-        }
-        if (tabName !== 'screen' && remoteScreen && remoteScreen.streaming) {
-            remoteScreen.stop();
-        }
+        if (tabName !== 'dashboard') dashboard.stopPolling();
+        if (tabName !== 'screen' && remoteScreen && remoteScreen.streaming) remoteScreen.stop();
     }
 
     tabs.forEach(btn => {
         btn.addEventListener('click', () => switchTab(btn.dataset.tab));
     });
 
-    document.getElementById('logout-btn').addEventListener('click', () => {
-        Auth.logout();
-    });
-
-
-    document.getElementById('go-btn').addEventListener('click', () => {
-        const path = prompt('Enter path:', fileBrowser.currentPath);
-        if (path) fileBrowser.navigate(path);
-    });
+    document.getElementById('logout-btn').addEventListener('click', () => Auth.logout());
 
     const visualViewport = window.visualViewport;
     if (visualViewport) {

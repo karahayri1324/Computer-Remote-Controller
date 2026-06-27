@@ -42,6 +42,10 @@ class Settings {
     open() {
         this.overlay.classList.remove('hidden');
         this._loadTFAStatus();
+        // Show username
+        const uname = Auth.getUsername();
+        const el = document.getElementById('settings-username');
+        if (el && uname) el.textContent = uname;
         // Clear forms
         document.getElementById('pw-old').value = '';
         document.getElementById('pw-new').value = '';

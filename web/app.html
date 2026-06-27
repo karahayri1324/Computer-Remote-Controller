@@ -24,7 +24,8 @@
             <button data-tab="dashboard">System</button>
             <button data-tab="screen" class="desktop-only">Screen</button>
         </nav>
-<button id="settings-btn" title="Settings">&#9881;</button>
+        <span id="username-display" class="username-display"></span>
+        <button id="settings-btn" title="Settings">&#9881;</button>
         <button id="logout-btn">Logout</button>
     </header>
 
@@ -36,6 +37,15 @@
                 <button class="modal-close" id="settings-close">&times;</button>
             </div>
             <div class="modal-body">
+                <!-- Account Info -->
+                <div class="settings-section">
+                    <h3>Account</h3>
+                    <div class="info-row" style="font-size:0.88rem">
+                        <span class="info-label">Logged in as</span>
+                        <span class="info-value" id="settings-username">—</span>
+                    </div>
+                </div>
+
                 <!-- Change Password -->
                 <div class="settings-section">
                     <h3>Change Password</h3>
@@ -124,7 +134,8 @@
 
         <section id="tab-files" class="tab-content">
             <div class="file-toolbar">
-                <span class="file-path" id="file-path">/</span>
+                <button id="file-up-btn" title="Go up">&#8593;</button>
+                <input type="text" class="file-path" id="file-path" value="/" spellcheck="false" autocomplete="off">
                 <button id="go-btn">Go</button>
             </div>
             <div class="file-list" id="file-list"></div>

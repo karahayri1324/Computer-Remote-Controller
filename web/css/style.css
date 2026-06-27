@@ -85,6 +85,18 @@ nav button {
 nav button:hover { color: var(--text-primary); background: var(--bg-tertiary); }
 nav button.active { color: var(--accent); background: var(--bg-tertiary); }
 
+.username-display {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    flex-shrink: 0;
+    padding: 0 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 80px;
+}
+
 #settings-btn {
     background: none;
     border: 1px solid var(--border);
@@ -272,39 +284,49 @@ main {
 .file-toolbar {
     display: flex;
     align-items: center;
-    padding: 8px 12px;
+    padding: 6px 10px;
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--border);
-    gap: 8px;
+    gap: 6px;
     flex-shrink: 0;
 }
 
 .file-path {
     flex: 1;
     font-family: 'Fira Code', monospace;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     color: var(--text-primary);
     background: var(--bg-primary);
     padding: 6px 10px;
     border-radius: 6px;
     border: 1px solid var(--border);
-    white-space: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    outline: none;
+    min-width: 0;
+    transition: border-color 0.2s;
+}
+.file-path:focus {
+    border-color: var(--accent);
 }
 
 .file-toolbar button {
     background: var(--bg-tertiary);
     border: 1px solid var(--border);
     color: var(--text-secondary);
-    padding: 6px 12px;
+    padding: 6px 10px;
     font-size: 0.8rem;
     cursor: pointer;
     border-radius: 6px;
     white-space: nowrap;
+    flex-shrink: 0;
     -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s, color 0.15s;
 }
-.file-toolbar button:hover { background: var(--accent); color: var(--bg-primary); }
+.file-toolbar button:hover { background: var(--accent); color: var(--bg-primary); border-color: var(--accent); }
+
+#file-up-btn {
+    font-size: 1rem;
+    padding: 5px 9px;
+}
 
 .file-list {
     flex: 1;
@@ -316,34 +338,45 @@ main {
 .file-entry {
     display: flex;
     align-items: center;
-    padding: 12px 16px;
+    padding: 10px 14px;
     cursor: pointer;
     gap: 10px;
     border-bottom: 1px solid var(--bg-tertiary);
-    min-height: 48px;
+    min-height: 44px;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
+    transition: background 0.1s;
 }
 .file-entry:hover { background: var(--bg-secondary); }
 .file-entry:active { background: var(--bg-tertiary); }
 
 .file-icon {
-    font-size: 1.2rem;
-    width: 24px;
+    font-size: 1.1rem;
+    width: 22px;
     text-align: center;
     flex-shrink: 0;
 }
 .file-name {
     flex: 1;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     color: var(--text-primary);
     word-break: break-all;
+    min-width: 0;
 }
-.file-name.dir { color: var(--accent); font-weight: 500; }
+.file-name.dir { color: var(--accent); font-weight: 600; }
+
+.file-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
 .file-size {
-    font-size: 0.75rem;
+    font-size: 0.73rem;
     color: var(--text-muted);
     flex-shrink: 0;
+    font-family: 'Fira Code', monospace;
 }
 
 .upload-area {
@@ -520,6 +553,7 @@ main {
 }
 .toast.error { border-color: var(--danger); color: var(--danger); }
 .toast.success { border-color: var(--success); color: var(--success); }
+.toast.info { border-color: var(--accent); color: var(--accent); }
 
 @keyframes slideIn {
     from { transform: translateX(100%); opacity: 0; }
@@ -637,6 +671,7 @@ main {
     nav button { padding: 6px 10px; font-size: 0.8rem; }
     #settings-btn { padding: 4px 8px; font-size: 0.9rem; }
     #logout-btn { padding: 4px 8px; font-size: 0.75rem; }
+    .username-display { display: none; }
 
     #mobile-keyboard-bar { display: flex; }
 

@@ -3,13 +3,13 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from auth import (
-    create_access_token, create_2fa_pending_token, verify_2fa_pending_token,
+    create_access_token,
     check_rate_limit, get_current_user,
 )
 from connection_manager import manager
 from users import (
     register_user, authenticate_user, change_password,
-    get_2fa_status, setup_totp, enable_totp, disable_totp, verify_totp,
+    get_2fa_status, setup_totp, enable_totp, disable_totp,
 )
 
 router = APIRouter(prefix="/api")
@@ -24,10 +24,6 @@ class LoginRequest(BaseModel):
 class RegisterRequest(BaseModel):
     username: str
     password: str
-
-class Login2FARequest(BaseModel):
-    pending_token: str
-    code: str
 
 class ChangePasswordRequest(BaseModel):
     old_password: str
@@ -64,28 +60,6 @@ async def login(req: LoginRequest, request: Request):
 
     if not authenticate_user(username, req.password):
         return JSONResponse(status_code=401, content={"error": "Invalid username or password"})
-
-    # Check if 2FA is enabled
-    if get_2fa_status(username):
-        pending_token = create_2fa_pending_token(username)
-        return {"requires_2fa": True, "pending_token": pending_token}
-
-    token = create_access_token(username)
-    return {"access_token": token, "token_type": "bearer", "username": username}
-
-
-@router.post("/login/2fa")
-async def login_2fa(req: Login2FARequest, request: Request):
-    client_ip = request.client.host if request.client else "unknown"
-    if not check_rate_limit(f"2fa:{client_ip}"):
-        return JSONResponse(status_code=429, content={"error": "Too many attempts. Try again later."})
-
-    username = verify_2fa_pending_token(req.pending_token)
-    if not username:
-        return JSONResponse(status_code=401, content={"error": "Invalid or expired session. Login again."})
-
-    if not verify_totp(username, req.code):
-        return JSONResponse(status_code=401, content={"error": "Invalid 2FA code"})
 
     token = create_access_token(username)
     return {"access_token": token, "token_type": "bearer", "username": username}
